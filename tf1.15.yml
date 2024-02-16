@@ -2,10 +2,12 @@ name: tf1.15
 channels:
   - defaults
   - conda-forge
+  - anaconda
+  - pnlbwh
 dependencies:
   - python=3.7
   - cudnn=7.6.5
-  - conda-forge::nibabel
+  - nibabel
   - h5py=2.10.0
   - hdf5>=2.0.0
   - ants
