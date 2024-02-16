@@ -9,7 +9,7 @@ dependencies:
   - cudnn=7.6.5
   - nibabel
   - h5py=2.10.0
-  - hdf5>=2.0.0
+  - hdf5=1.10.6
   - ants
   - pip
   - pip:
