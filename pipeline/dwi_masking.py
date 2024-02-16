@@ -82,8 +82,12 @@ with warnings.catch_warnings():
     config.log_device_placement = False
     sess = tf.Session(config=config)
     # from keras import backend as K
-    from tensorflow.keras import backend as K
-    K.set_session(sess)
+    try:
+        from keras import backend as K
+        K.set_session(sess)
+    except ImportError:
+        from tensorflow.keras import backend as K
+        K.set_session(sess)
 
 import multiprocessing as mp
 import sys
