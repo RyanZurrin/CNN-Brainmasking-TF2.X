@@ -65,8 +65,10 @@ except:
 import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
+    # import tensorflow as tf
+    # tf.logging.set_verbosity(tf.logging.ERROR)
     import tensorflow as tf
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
     # Configure for dynamic GPU memory usage
     config = tf.ConfigProto()
@@ -74,6 +76,7 @@ with warnings.catch_warnings():
     config.log_device_placement = False
     sess = tf.Session(config=config)
     from keras import backend as K
+    # from tensorflow.keras import backend as K
     K.set_session(sess)
 
 import multiprocessing as mp
@@ -85,10 +88,13 @@ import datetime
 import pathlib
 import nibabel as nib
 import numpy as np
-from keras.models import model_from_json
 from multiprocessing import Manager
+from keras.models import model_from_json
+# from tensorflow.keras.models import model_from_json
 from keras import backend as K
+# from tensorflow.keras import backend as K
 from keras.optimizers import Adam
+# from tensorflow.keras.optimizers import Adam
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -133,6 +139,7 @@ def predict_mask(input_file, trained_folder, view='default'):
     def neg_dice_coef_loss(y_true, y_pred):
         return dice_coef(y_true, y_pred)
 
+    # TODO: THIS IS TF 1.12 WAY OF LOADING MODEL and does not work in TF 1.15
     # load json and create model
     json_file = open(trained_folder + '/CompNetBasicModel.json', 'r')
     loaded_model_json = json_file.read()
@@ -220,7 +227,8 @@ def normalize(b0_resampled, percentile, data_n):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
     output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
-    imgU16 = img.get_data().astype(np.float32)
+    # imgU16 = img.get_data().astype(np.float32)
+    imgU16 = img.get_fdata().astype(np.float32)
     p = np.percentile(imgU16, percentile)
     data = imgU16 / p
     data[data > 1] = 1
@@ -464,7 +472,8 @@ def pre_process(input_file, target_list, b0_threshold=50.):
             print("Extracting b0 volume...")
             bvals = np.array(read_bvals(input_file.split('.nii')[0] + '.bval'))
             where_b0 = np.where(bvals <= b0_threshold)[0]
-            b0 = dwi.get_data()[..., where_b0].mean(-1)
+            # b0 = dwi.get_data()[..., where_b0].mean(-1)
+            b0 = dwi.get_fdata()[..., where_b0].mean(-1)
         else:
             print("Loading b0 volume...")
             b0 = dwi.get_fdata()
@@ -644,7 +653,8 @@ or MRtrix3 maskfilter (mrtrix)''')
             count = 0
             for b0_nifti in data_n:
                 img = nib.load(b0_nifti)
-                imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                # imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                imgU16_sagittal = img.get_fdata().astype(np.float32)  # sagittal view
                 imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
                 imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)  # Axial view
 

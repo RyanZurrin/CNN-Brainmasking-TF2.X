@@ -5,15 +5,14 @@ channels:
     - pnlbwh
     
 dependencies:
-    - python==3.6
-    - tensorflow-gpu==1.12.0
-    - cudatoolkit==9.0
-    - cudnn==7.6.0
-    - keras==2.2.4
+    - python=3.9
+    - cudatoolkit=11.8
+    - cudnn==8.6
     - nibabel>=2.2.1
     - ants
     - pip
     - pip:
+        - tensorflow
         - ipython
         - prompt-toolkit==2.0.1
         - gputil

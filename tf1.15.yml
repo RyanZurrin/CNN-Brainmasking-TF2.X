@@ -1,0 +1,17 @@
+name: tf1.15
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7
+  - cudnn=7.6.5
+  - conda-forge::nibabel
+  - ants
+  - pip
+  - pip:
+    - tensorflow==1.15.0
+    - ipython
+    - prompt-toolkit==2.0.1
+    - gputil
+    - scikit-image==0.16.2
+    - git+https://github.com/pnlbwh/conversion.git
