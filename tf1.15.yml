@@ -10,7 +10,9 @@ dependencies:
   - pip
   - pip:
     - tensorflow==1.15.0
+    - keras==2.2.4
     - ipython
+    - protobuf==3.20.*
     - prompt-toolkit==2.0.1
     - gputil
     - scikit-image==0.16.2
