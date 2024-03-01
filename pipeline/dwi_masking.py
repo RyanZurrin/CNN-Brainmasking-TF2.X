@@ -3,9 +3,10 @@
 from __future__ import division
 
 # -----------------------------------------------------------------
-# Author:       Senthil Palanivelu, Tashrif Billah                 
-# Written:      01/22/2020                             
-# Last Updated:     02/28/2020
+# Author:           Senthil Palanivelu, Tashrif Billah
+# Written:          01/22/2020
+# Updatad by:       Ryan Zurrin
+# Last Updated:     03/1/2024
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -34,9 +35,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
+# set TF_XLA_FLAGS to enable XLA
+# os.environ['TF_XLA_FLAGS'] = '--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit'
+
 # Use pure python implementation of protocol buffers
 # check if protobuf is later then 3.20.0 and if so, set the environment variable
 import pkg_resources
+
 if pkg_resources.get_distribution("protobuf").version >= "3.20.0":
     os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -69,25 +74,42 @@ except:
     print("GPU not available...")
 
 import warnings
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
-    # import tensorflow as tf
-    # tf.logging.set_verbosity(tf.logging.ERROR)
     import tensorflow as tf
-    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-    # Configure for dynamic GPU memory usage
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.log_device_placement = False
-    sess = tf.Session(config=config)
-    # from keras import backend as K
-    try:
-        from keras import backend as K
+    # check version of tf and if 1.12 or less use tf.logging.set_verbosity(tf.logging.ERROR)
+    if int(tf.__version__.split('.')[0]) <= 1 and int(tf.__version__.split('.')[1]) <= 12:
+        tf.logging.set_verbosity(tf.logging.ERROR)
+        # Configure for dynamic GPU memory usage
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.log_device_placement = False
+        sess = tf.Session(config=config)
+        try:
+            from keras import backend as K
+        except ImportError:
+            from tensorflow.keras import backend as K
         K.set_session(sess)
-    except ImportError:
-        from tensorflow.keras import backend as K
-        K.set_session(sess)
+    else:
+        print("Num GPUs Available: ",
+              len(tf.config.experimental.list_physical_devices('GPU')))
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                # Currently, memory growth needs to be the same across GPUs
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                logical_gpus = tf.config.experimental.list_logical_devices(
+                    'GPU')
+                print(len(gpus), "Physical GPUs,", len(logical_gpus),
+                      "Logical GPUs")
+            except RuntimeError as e:
+                # Memory growth must be set before GPUs have been initialized
+                print(e)
+
 
 import multiprocessing as mp
 import sys
@@ -153,7 +175,6 @@ def predict_mask(input_file, trained_folder, view='default'):
     def neg_dice_coef_loss(y_true, y_pred):
         return dice_coef(y_true, y_pred)
 
-    # TODO: THIS IS TF 1.12 WAY OF LOADING MODEL and does not work in TF 1.15
     # load json and create model
     json_file = open(trained_folder + '/CompNetBasicModel.json', 'r')
     loaded_model_json = json_file.read()
